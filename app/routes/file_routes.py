@@ -5,13 +5,13 @@ from .. import db
 from ..models import Document
 from ..auth import token_required
 
-file_bp = Blueprint('file', __name__)
+file = Blueprint('file', __name__)
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@file_bp.route('/upload', methods=['POST'])
+@file.route('/upload', methods=['POST'])
 @token_required
 def upload_file(current_user):
     if 'file' not in request.files:
@@ -43,7 +43,7 @@ def upload_file(current_user):
     else:
         return jsonify({'message': '허용되지 않는 파일 형식입니다.'}), 400
 
-@file_bp.route('/list', methods=['GET'])
+@file.route('/list', methods=['GET'])
 @token_required
 def get_my_files(current_user):
     documents = current_user.documents

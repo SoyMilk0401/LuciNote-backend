@@ -5,9 +5,9 @@ from .. import db
 from ..models import Document, Submission
 from ..auth import token_required
 
-summary_bp = Blueprint('summary', __name__)
+summary = Blueprint('summary', __name__)
 
-@summary_bp.route('/summary/<int:document_id>', methods=['POST'])
+@summary.route('/summary/<int:document_id>', methods=['POST'])
 @token_required
 def submit_summary(current_user, document_id):
     document = Document.query.get(document_id)

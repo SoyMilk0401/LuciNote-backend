@@ -15,7 +15,6 @@ def token_required(f):
             return jsonify({'message': '토큰이 존재하지 않습니다.'}), 401
 
         try:
-            # current_app 프록시를 통해 현재 실행 중인 앱의 SECRET_KEY를 가져옴
             data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
             current_user = User.query.get(data['user_id'])
             if not current_user:
