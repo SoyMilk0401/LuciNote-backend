@@ -5,7 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'flaskandjwtauthlearning'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    DOCUMENTS_FOLDER = 'documents'
+    MATERIAL_FOLDER = 'material'
     THUMBNAILS_FOLDER = 'thumbnails'
 
 class DevelopmentConfig(Config):
