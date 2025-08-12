@@ -8,8 +8,8 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        if 'x-access-token' in request.headers:
-            token = request.headers['x-access-token']
+        if 'Access-Token' in request.headers:
+            token = request.headers['Access-Token']
 
         if not token:
             return jsonify({'message': '토큰이 존재하지 않습니다.'}), 401

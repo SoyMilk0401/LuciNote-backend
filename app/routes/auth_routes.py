@@ -7,7 +7,6 @@ from ..models import User
 
 auth = Blueprint('auth', __name__)
 
-
 def create_tokens(user_id):
     access_token = jwt.encode({
         'user_id': user_id,
