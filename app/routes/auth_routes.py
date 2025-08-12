@@ -5,7 +5,7 @@ import jwt
 from .. import db
 from ..models import User
 
-# 'auth'라는 이름의 Blueprint 생성
+
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
