@@ -17,6 +17,6 @@ def create_app(config_name):
     
     app.register_blueprint(auth, url_prefix='/api/auth')
     app.register_blueprint(file, url_prefix='/api/files')
-    app.register_blueprint(summary, url_prefix='/api')
+    app.register_blueprint(summary, url_prefix='/api/summary')
 
     return app
