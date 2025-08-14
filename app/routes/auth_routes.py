@@ -105,13 +105,11 @@ def logout():
 
 @auth.route('/login/<provider>')
 def social_login(provider):
-    """소셜 로그인 페이지로 리디렉션합니다."""
     redirect_uri = url_for('auth.authorize', provider=provider, _external=True)
     return oauth.create_client(provider).authorize_redirect(redirect_uri)
 
 @auth.route('/authorize/<provider>')
 def authorize(provider):
-    """소셜 로그인 후 콜백을 처리하고, 유저 정보 확인 및 생성을 담당합니다."""
     client = oauth.create_client(provider)
     token = client.authorize_access_token()
     
