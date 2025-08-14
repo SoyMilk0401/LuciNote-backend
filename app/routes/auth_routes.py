@@ -1,9 +1,10 @@
 import datetime
-from flask import request, jsonify, Blueprint, current_app, make_response
+from flask import request, jsonify, Blueprint, current_app, make_response, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 from .. import db
-from ..models import User
+from ..models import User, UserProvider
+from app import oauth
 
 auth = Blueprint('auth', __name__)
 
@@ -99,4 +100,78 @@ def refresh():
 def logout():
     response = make_response(jsonify({'message': '성공적으로 로그아웃되었습니다.'}))
     response.set_cookie('refresh_token', '', expires=0)
+    return response
+
+
+@auth.route('/login/<provider>')
+def social_login(provider):
+    """소셜 로그인 페이지로 리디렉션합니다."""
+    redirect_uri = url_for('auth.authorize', provider=provider, _external=True)
+    return oauth.create_client(provider).authorize_redirect(redirect_uri)
+
+@auth.route('/authorize/<provider>')
+def authorize(provider):
+    """소셜 로그인 후 콜백을 처리하고, 유저 정보 확인 및 생성을 담당합니다."""
+    client = oauth.create_client(provider)
+    token = client.authorize_access_token()
+    
+    user_info = None
+    if provider == 'google':
+        user_info = client.get('https://www.googleapis.com/oauth2/v3/userinfo').json()
+    elif provider == 'naver':
+        user_info_resp = client.get('v1/nid/me')
+        user_info_resp.raise_for_status()
+        user_info = user_info_resp.json().get('response')
+
+    if not user_info:
+        return jsonify(message="사용자 정보를 가져올 수 없습니다."), 400
+
+    provider_user_id = user_info.get('id') or user_info.get('sub')
+    email = user_info.get('email')
+    
+    user_provider = UserProvider.query.filter_by(
+        provider=provider, 
+        provider_user_id=str(provider_user_id)
+    ).first()
+
+    if user_provider:
+        user = user_provider.user
+        access_token, refresh_token = create_tokens(user.id)
+        response = make_response(jsonify({'access_token': access_token, 'message': f'{user.username}님 환영합니다.'}))
+        response.set_cookie('refresh_token', value=refresh_token, httponly=True, secure=True, samesite='Lax')
+        return response
+
+    user = User.query.filter_by(email=email).first()
+    if user:
+        new_provider = UserProvider(
+            provider=provider,
+            provider_user_id=str(provider_user_id),
+            email=email,
+            display_name=user_info.get('name'),
+            user_id=user.id
+        )
+        db.session.add(new_provider)
+        db.session.commit()
+    else:
+        new_user = User(
+            email=email,
+            username=user_info.get('name') or f"{provider}_{provider_user_id}"
+        )
+        db.session.add(new_user)
+        db.session.flush()
+
+        new_provider = UserProvider(
+            provider=provider,
+            provider_user_id=str(provider_user_id),
+            email=email,
+            display_name=user_info.get('name'),
+            user_id=new_user.id
+        )
+        db.session.add(new_provider)
+        db.session.commit()
+        user = new_user
+
+    access_token, refresh_token = create_tokens(user.id)
+    response = make_response(jsonify({'access_token': access_token, 'message': '로그인에 성공했습니다.'}))
+    response.set_cookie('refresh_token', value=refresh_token, httponly=True, secure=True, samesite='Lax')
     return response
